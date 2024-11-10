@@ -1,0 +1,105 @@
+//*********************************************************************************************
+
+// Calcluating the NDVI for Chakwal District using Landsat 8 Images
+
+//*********************************************************************************************
+
+// Filter Landsat 8 SR imagery and area of interest
+var shp = ee.FeatureCollection("users/shahidiqbal/Pak_Dist")
+            .filter(ee.Filter.or(ee.Filter.eq('NAME_3', 'Chakwal')));
+Map.addLayer(shp,{color: 'green', width: 1},'Chakwal'); 
+
+
+// Define the Landsat 8 Surface Reflectance image collection
+var landsat8_SR = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+  .filterBounds(shp)
+  .filterDate('2020-03-01', '2023-12-20')
+  .sort("CLOUD_COVER")
+  .first();
+
+
+// // Function to calculate NDVI
+var addNDVI = function(image) {
+  var ndvi = image.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI');
+  return image.addBands(ndvi);
+};
+
+
+// Apply the function to the image collection
+var landsat8_SR_ndvi = addNDVI(landsat8_SR);
+var clipped_ndvi = landsat8_SR_ndvi.clip(shp);
+
+
+
+//
+var palettes = require('users/gena/packages:palettes');
+var palette = palettes.colorbrewer.RdYlGn[6];
+
+// Display the NDVI image
+Map.centerObject(shp, 9);
+Map.addLayer(clipped_ndvi.select('NDVI'), {
+  min: 0,
+  max: 1,
+  palette: palette
+}, 'NDVI');
+
+
+
+//*********************************************************************************************
+
+// Calcluating the NDWI for Chakwal District using Landsat 8 Images
+
+//*********************************************************************************************
+
+
+// Define the Landsat 8 Surface Reflectance image collection
+var landsat8_SR = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+  .filterBounds(shp)
+  .filterDate('2020-03-01', '2023-12-20')
+  .sort("CLOUD_COVER")
+  .first();
+
+// // Function to calculate NDWI
+var calculateNDWI = function(image) {
+  var ndwi = image.normalizedDifference(['SR_B3', 'SR_B5']).rename('NDWI');
+  return image.addBands(ndwi);
+};
+
+// Apply NDWI calculation to the image collection
+var landsat8_SR_withNDWI = calculateNDWI(landsat8_SR);
+var clipped_ndwi = landsat8_SR_withNDWI.clip(shp);
+
+
+//
+var palettes = require('users/gena/packages:palettes');
+var palette = palettes.colorbrewer.Paired[6];
+
+
+// Display the result
+Map.centerObject(shp, 9);
+Map.addLayer(clipped_ndwi.select('NDWI'), {min: -1, max: 1, palette: palette}, 'NDWI');
+
+
+
+//*********************************************************************************************
+
+// Calcluating the NDDI for Chakwal District using Landsat 8 Images
+
+//*********************************************************************************************
+
+// Function to calculate NDDI
+var calculateNDDI = function(image) {
+  var nddi = image.normalizedDifference(['SR_B5', 'SR_B7']).rename('NDDI');
+  return image.addBands(nddi);
+};
+
+// Apply NDDI calculation to the image collection
+var landsat8_SR_withNDDI = calculateNDDI(landsat8_SR);
+var clipped_nddi = landsat8_SR_withNDDI.clip(shp);
+
+
+
+// Display the result
+Map.centerObject(shp, 9);
+Map.addLayer(clipped_nddi.select('NDDI'), {min: -1, max: 1, palette: ['green', 'yellow', 'red']}, 'NDDI');
+
